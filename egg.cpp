@@ -1,25 +1,42 @@
 #include <iostream>
 #include <string>
+#include <vector>
 #include <thread>
 #include <chrono>
-#include "suiji.h" 
+#include "suiji.h"
 
 using namespace std;
 
-//creat an egg class(functions, outward a, crash)
-class Egg
-{
-public:
-    float Money = 200.0;
+// ===== Terminal Utils =====
+#define RESET "\033[0m"
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define YELLOW "\033[33m"
+#define CYAN "\033[36m"
+#define BOLD "\033[1m"
+
+void clear() {
+    cout << "\033[2J\033[H";
+}
+
+// ===== Game Class =====
+class EggGame {
+private:
+    float money = 200.0f;
+    int ducks = 0;
     Random rnd;
 
-    void M()
-    {
-        cout << "money : " << Money << endl;
+public:
+    void HUD() {
+        cout << CYAN << "===============================\n";
+        cout << "      EGG SMASHER V2.0         \n";
+        cout << "===============================" << RESET << endl;
+        cout << YELLOW << "Money: $" << money << RESET << endl;
+        cout << GREEN << "Ducks: " << ducks << " ( +" << ducks * 20 << "/turn )" << RESET << endl;
+        cout << endl;
     }
 
-    void Ap()
-    {
+    void drawEgg() {
         cout << "     **" << endl;
         cout << "   ******" << endl;
         cout << "  ********" << endl;
@@ -27,202 +44,82 @@ public:
         cout << "************" << endl;
         cout << "  ********" << endl;
         cout << "    ****" << endl;
-        M();
     }
 
-    void Smash()
-    {
-        system("clear");
-        const char* frames[] = {
-            "   ***   \n"
-            "  *****  \n"
-            "  *****  \n"
-            "   ***   \n",
-
-            "   ***   \n"
-            "  * * *  \n"
-            "  ** **  \n"
-            "   ***   \n",
-
-            "   * *   \n"
-            "  * * *  \n"
-            "  *   *  \n"
-            "   * *   \n",
-
-            " *  *  * \n"
-            "  *   *  \n"
-            " *     * \n"
-            "  *   *  \n",
-
-            "*   *   *\n"
-            "   *   * \n"
-            " *     * \n"
-            "   *   * \n"
+    void smashAnimation() {
+        vector<string> frames = {
+            "   ***   \n  *****  \n  *****  \n   ***   \n",
+            "   ***   \n  * * *  \n  ** **  \n   ***   \n",
+            "   * *   \n  * * *  \n  *   *  \n   * *   \n",
+            " *  *  * \n  *   *  \n *     * \n  *   *  \n",
+            "*   *   *\n   *   * \n *     * \n   *   * \n"
         };
-
-        for (int i = 0; i < 5; i++) {
-            system("clear"); 
-            cout << frames[i] << endl;
+        for (auto &f : frames) {
+            clear();
+            cout << f << endl;
             this_thread::sleep_for(chrono::milliseconds(200));
-            system("clear"); 
         }
     }
 
-    void A(float add)
-{
-    float oldMoney = Money;
-    float target = Money + add;
-
-    for (int i = (int)oldMoney; i <= (int)target; i++) {
-        system("clear");
-        cout << "Money : " << i << "   $$$.  " << endl;
-        this_thread::sleep_for(chrono::milliseconds(10)); 
+    void gainMoney(float amount) {
+        float start = money;
+        float end = money + amount;
+        for (int i = (int)start; i <= (int)end; i += 5) {
+            clear();
+            cout << YELLOW << "Money: $" << i << RESET << endl;
+            this_thread::sleep_for(chrono::milliseconds(15));
+        }
+        money = end;
     }
 
-    Money = target;
-    cin.get();
-}
-
-    void HatchDuck()
-{
-    const char* frames[10] = {
-        // 1 蛋完整
-        "   ***   \n"
-        "  *****  \n"
-        "  *****  \n"
-        "   ***   \n",
-
-        // 2 裂缝出现
-        "   ***   \n"
-        "  ** **  \n"
-        "  *****  \n"
-        "   ***   \n",
-
-        // 3 裂缝加大
-        "   * *   \n"
-        "  * * *  \n"
-        "  *****  \n"
-        "   ***   \n",
-
-        // 4 蛋壳掉一块
-        "   * *   \n"
-        "  *   *  \n"
-        "  ** **  \n"
-        "   ***   \n",
-
-        // 5 小鸭头探出来
-        "   ^ ^   \n"
-        "  (o_o)  \n"
-        "  ** **  \n"
-        "   ***   \n",
-
-        // 6 鸭子伸长
-        "   ^ ^   \n"
-        "  (o_o)  \n"
-        "  /( )\\  \n"
-        "   ***   \n",
-
-        // 7 鸭子站起来
-        "   ^ ^   \n"
-        "  (o_o)  \n"
-        "  /( )\\  \n"
-        "   | |   \n",
-
-        // 8 鸭子张开翅膀
-        "  \\^ ^/  \n"
-        "  (o_o)  \n"
-        "  /( )\\  \n"
-        "   | |   \n",
-
-        // 9 鸭子展开翅膀
-        " \\ ^ ^ / \n"
-        "( (o_o) )\n"
-        "  /( )\\  \n"
-        "   | |   \n",
-
-        // 10 完整小鸭
-        "   ^ ^   \n"
-        "  (o_o)  \n"
-        " <( ) ( )>\n"
-        "   | |   \n"
-    };
-
-    for (int i = 0; i < 10; i++) {
-        system("clear");
-        cout << frames[i] << endl;
-        this_thread::sleep_for(chrono::milliseconds(500));
+    void hatchDuck() {
+        ducks++;
+        cout << GREEN << BOLD << "A duck is born! 🦆" << RESET << endl;
     }
-    cout << "A duck is born! 🦆" << endl;
-    cin.get();
-}
 
-    void Tree()
-    {
+    void randomEvent() {
+        int roll = rnd.randint(1, 100);
+        if (roll <= 50) {
+            float reward = rnd.randfloat(100, 300);
+            cout << GREEN << "You found coins!" << RESET << endl;
+            gainMoney(reward);
+        } else if (roll <= 75) {
+            hatchDuck();
+        } else if (roll <= 90) {
+            cout << RED << "Nothing happened..." << RESET << endl;
+        } else {
+            cout << BOLD << YELLOW << "LEGENDARY EGG!!!" << RESET << endl;
+            gainMoney(1000);
+        }
+    }
+
+    void nextTurn() {
+        money += ducks * 20;
+    }
+
+    void run() {
         string input;
+        while (true) {
+            clear();
+            HUD();
+            drawEgg();
+            cout << CYAN << "Press Enter to smash (Q to quit)" << RESET << endl;
+            getline(cin, input);
+            if (input == "q" || input == "Q") break;
 
-        cout << "you got a money tree!!!!" << endl;
-        cin.get();
-        cout << "but u need spend 300 $ to purchase it!" << endl;
-        cout << "press Y if u want" << endl;
-        getline(cin, input);
-            if (input == "y" || input == "Y") {
-                if (Money >= 300){
-                    Money -= 300;
-                    cout << "u got it!!!$" << endl;
-                    A(100.0);           
-                }
-                else{
-                    cout << "fail" << endl;
-                }
-            } else if(input == "q" || input == "Q") {
-                cout << "ok" << endl;
-            }
-    }
+            smashAnimation();
+            randomEvent();
+            nextTurn();
 
-    void None()
-    {
-        cout << "u got nothing" << endl;
-    }
-    
-    void ST()
-    {
-        int i = rnd.randint(0, 3);
-        switch(i)
-        {
-            case 0 : A(rnd.randfloat(200.0, 300.0)); break;
-            case 1 : Tree(); M(); break;
-            case 2 : HatchDuck(); M(); break;
-            case 3 : None(); M(); break;
+            cout << CYAN << "\nPress Enter to continue..." << RESET << endl;
+            getline(cin, input);
         }
-
+        cout << "Game Over. Thanks for playing!" << endl;
     }
 };
 
-int main()
-{
-    Egg egg;
-    string input;
-
-    while (true) {   
-        egg.Ap();
-        cout << "Press Enter to smash it (or type Q to quit)" << endl;
-
-        getline(cin, input);
-        if (input == "q" || input == "Q") {
-            cout << "Bye bye~" << endl;
-            break; 
-        }
-
-        egg.Smash();
-        egg.ST();
-
-        cout << "\nPress Enter to continue, or Q to quit." << endl;
-        getline(cin, input);
-        if (input == "q" || input == "Q") {
-            cout << "Game Over!" << endl;
-            break;
-        }
-    }
-
+int main() {
+    EggGame game;
+    game.run();
     return 0;
 }
